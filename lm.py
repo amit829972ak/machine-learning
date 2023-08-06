@@ -20,10 +20,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.cluster import KMeans
 from xgboost import XGBClassifier
-from sklearn.metrics import classification_report, f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, roc_auc_score, r2_score,mean_squared_error
-import pickle
-import streamlit.components.v1 as components
+from sklearn.metrics import classification_report, f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, roc_auc_score, r2_score,mean_squared_error, silhouette_score
+
 
 # Animation at start
 
@@ -302,7 +302,8 @@ def main():
     'Decision Tree',
     'Random Forest',
     'Gradient Boosting',
-    'XGBoost'
+    'XGBoost',
+    'K-Means        
 ])
 
 # Allow the user to select a classifier
@@ -317,6 +318,32 @@ def main():
     # Calculate and display the evaluation metrics
             st.write('R2 score:', r2_score(y_test, y_pred))
             st.write('Mean squared error:', mean_squared_error(y_test, y_pred))
+        elif algorithm == 'K-Means':
+             n_clusters = st.slider('Select number of clusters', 2, 10)
+    # Cluster data using k-means algorithm
+             model = KMeans(n_clusters=n_clusters)
+             model.fit(data_clean)
+             labels = model.labels_
+
+    # Calculate silhouette score
+             silhouette_avg = silhouette_score(data_clean, labels)
+             st.write('Silhouette score:', silhouette_avg)
+
+    # Plot elbow method
+             distortions = []
+             for i in range(2, 11):
+                kmeans = KMeans(n_clusters=i)
+                kmeans.fit(data_clean)
+                distortions.append(kmeans.inertia_)
+
+             plt.plot(range(2, 11), distortions, 'bx-')
+             plt.xlabel('Number of clusters')
+             plt.ylabel('Distortion')
+             plt.title('Elbow Method')
+             st.pyplot()
+    # Display labels
+             data_clean['cluster'] = labels
+             st.write(data_clean)
         elif algorithm == 'Support Vector Machine':
     # Train a SVM model on the training data
             model = SVC()
