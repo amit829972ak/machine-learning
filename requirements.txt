@@ -1,0 +1,14 @@
+streamlit
+pandas
+numpy 
+matplotlib 
+seaborn 
+requests
+streamlit_lottie  
+SMOTE
+imblearn 
+scikit-learn 
+StandardScaler
+model_selection 
+xgboost 
+metrics 
