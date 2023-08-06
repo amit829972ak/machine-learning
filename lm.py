@@ -303,7 +303,7 @@ def main():
     'Random Forest',
     'Gradient Boosting',
     'XGBoost',
-    'K-Means        
+    'K-Means'        
 ])
 
 # Allow the user to select a classifier
