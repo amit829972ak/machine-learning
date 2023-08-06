@@ -317,7 +317,7 @@ def main():
     # Calculate and display the evaluation metrics
             st.write('R2 score:', r2_score(y_test, y_pred))
             st.write('Mean squared error:', mean_squared_error(y_test, y_pred))
-        elif algorithm == 'SVM':
+        elif algorithm == 'Support Vector Machine':
     # Train a SVM model on the training data
             model = SVC()
             model.fit(X_train, y_train)
