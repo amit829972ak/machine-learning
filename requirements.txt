@@ -11,4 +11,5 @@ scikit-learn
 StandardScaler
 model_selection 
 xgboost 
-metrics 
+metrics
+chardet
