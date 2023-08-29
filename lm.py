@@ -83,7 +83,7 @@ def main():
         st.write(result)
         # Visualization      
         st.sidebar.header("Visualizations")
-        plot_options = ["Bar plot", "Scatter plot", "Histogram", "Box plot"]
+        plot_options = ["None","Bar plot", "Scatter plot", "Histogram", "Box plot"]
         selected_plot = st.sidebar.selectbox("Choose a plot type", plot_options)
 
         if selected_plot == "Bar plot":
@@ -301,7 +301,7 @@ def main():
 # Model selection
                
 # Create a dictionary of classifiers
-        task = st.selectbox('Select machine learning task', ['Classification', 'Regression', 'Clustering'])
+        task = st.selectbox('Select machine learning task', ['None','Classification', 'Regression', 'Clustering'])
         if task == 'Classification':
             algorithm = st.selectbox('Select algorithm', ['Logistic Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'SVM', 'KNN', 'Gradient Boosting'])
             if algorithm == 'Logistic Regression':
