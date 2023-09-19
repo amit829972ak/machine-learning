@@ -335,7 +335,7 @@ def main():
             else:
                 st.write('ROC AUC score:', roc_auc_score(y_test, y_pred))
         elif task == 'Regression':
-            algorithm = st.selectbox('Select algorithm', ['Linear Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'KNN', 'Gradient Boosting'])
+            algorithm = st.selectbox('Select algorithm', ['None', 'Linear Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'KNN', 'Gradient Boosting'])
             if algorithm == 'Linear Regression':
                 model = LinearRegression()
             elif algorithm == 'XGBoost':
