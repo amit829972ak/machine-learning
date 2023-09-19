@@ -301,7 +301,7 @@ def main():
 # Create a dictionary of classifiers
         task = st.selectbox('Select machine learning task', ['None','Classification', 'Regression', 'Clustering'])
         if task == 'Classification':
-            algorithm = st.selectbox('Select algorithm', ['Logistic Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'SVM', 'KNN', 'Gradient Boosting'])
+            algorithm = st.selectbox('Select algorithm', ['None', 'Logistic Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'SVM', 'KNN', 'Gradient Boosting'])
             if algorithm == 'Logistic Regression':
                model = LogisticRegression()
             elif algorithm == 'XGBoost':
@@ -333,7 +333,7 @@ def main():
             else:
                 st.write('ROC AUC score:', roc_auc_score(y_test, y_pred))
         elif task == 'Regression':
-            algorithm = st.selectbox('Select algorithm', ['None', 'Linear Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'KNN', 'Gradient Boosting'])
+            algorithm = st.selectbox('Select algorithm', ['Linear Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'KNN', 'Gradient Boosting'])
             if algorithm == 'Linear Regression':
                 model = LinearRegression()
             elif algorithm == 'XGBoost':
