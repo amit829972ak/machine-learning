@@ -46,7 +46,7 @@ def main():
     st.header("Supervised Machine Learning")
 
     st.subheader("Upload your CSV file")
-    data_file = st.file_uploader("Upload CSV or XLSX", type=["csv","xlsx"])
+    data_file = st.file_uploader("Upload your CSV file", type=["csv"])
     st.write("---")
     
 
@@ -56,8 +56,6 @@ def main():
            encoding = result['encoding']
            data_file.seek(0)
            data = pd.read_csv(data_file,encoding=encoding)
-        elif data_file.name.endswith(".xlsx"):
-           data = pd.read_excel(data_file)
         st.write(data.head())   
         st.write('---')
         st.subheader('We can see the count value, mean value, standard deviation, minimum and maximum value of each numeric column.')
