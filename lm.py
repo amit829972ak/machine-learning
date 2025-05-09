@@ -241,10 +241,9 @@ def main():
         
         # heatmap and corr graph
         st.subheader('Correalation and heatmap')
-        st.set_option('deprecation.showPyplotGlobalUse', False)
-        plt.figure(figsize=(30, 30))#canvas size
-        sns.heatmap(data_1.corr(), annot=True, cmap="RdYlGn", annot_kws={"size":15})
-        st.pyplot()
+        fig, ax = plt.subplots(figsize=(10, 8))  # Adjusted for more readable display in Streamlit
+        sns.heatmap(data_1.corr(), annot=True, cmap="RdYlGn", annot_kws={"size":8}, ax=ax)
+        st.pyplot(fig)
         st.write('---')
          
         #now comes the machine learning 
