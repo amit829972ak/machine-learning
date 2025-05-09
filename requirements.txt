@@ -1,7 +1,7 @@
-streamlit
 pandas
 numpy 
-matplotlib 
+streamlit>=1.32.0
+matplotlib>=3.5.0
 seaborn 
 requests
 streamlit_lottie  
