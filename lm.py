@@ -6,10 +6,10 @@ import seaborn as sns
 from sklearn.preprocessing import OrdinalEncoder
 import time
 import requests
-import streamlit as st
 from streamlit_lottie import st_lottie
 from streamlit_lottie import st_lottie_spinner
 from io import StringIO
+from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -25,18 +25,8 @@ from sklearn.metrics import classification_report, f1_score, precision_score, re
 import streamlit.components.v1 as components
 import chardet
 
-# Import SMOTE with try-except to handle version issues
-try:
-    from imblearn.over_sampling import SMOTE
-    SMOTE_AVAILABLE = True
-except ImportError:
-    SMOTE_AVAILABLE = False
-    st.warning("SMOTE is not available. Please install imbalanced-learn: pip install imbalanced-learn")
-
 # Animation at start
-
 def load_lottieurl(url: str):
-
     r = requests.get(url)
     if r.status_code != 200:
         return None
@@ -44,9 +34,7 @@ def load_lottieurl(url: str):
 
 
 lottie_url_hello = "https://lottie.host/c7ae530f-5d35-4fe1-851e-12bc2b7864f4/2rcYkXCxHr.json"
-
 lottie_hello = load_lottieurl(lottie_url_hello)
-
 
 st_lottie(lottie_hello)
 
@@ -89,7 +77,7 @@ def main():
         st.write(result)
         # Visualization      
         st.sidebar.header("Visualizations")
-        plot_options = ["None","Bar plot", "Scatter plot", "Histogram", "Box plot"]
+        plot_options = ["None","Bar plot", "Scatter plot", "Histogram", "Box plot", "Count plot"]
         selected_plot = st.sidebar.selectbox("Choose a plot type", plot_options)
 
         if selected_plot == "Bar plot":
@@ -139,7 +127,8 @@ def main():
         # filling the null values
         for col in data.columns:
             if data[col].dtype == 'object':
-                data[col] = data[col].fillna(data[col].mode().iloc[0])
+                if not data[col].mode().empty:
+                    data[col] = data[col].fillna(data[col].mode().iloc[0])
             elif data[col].dtype == 'float':
                data[col] = data[col].fillna(data[col].mean())
             elif data[col].dtype == 'int':
@@ -222,10 +211,10 @@ def main():
         ordinal_encoders = {}       
         columns = st.multiselect('Select columns for encoding', data_clean.columns)
 
-
-        encoder = OrdinalEncoder()
-        data_clean[columns] = encoder.fit_transform(data_clean[columns])
-        ordinal_encoders[col] = encoder
+        if len(columns) > 0:
+            encoder = OrdinalEncoder()
+            data_clean[columns] = encoder.fit_transform(data_clean[columns])
+            ordinal_encoders[col] = encoder
 # Display the updated DataFrame
         st.write(data_clean.head())
         
@@ -248,7 +237,7 @@ def main():
         
         
         # heatmap and corr graph
-        st.subheader('Correalation and heatmap')
+        st.subheader('Correlation and heatmap')
         fig, ax = plt.subplots(figsize=(10, 8))  # Adjusted for more readable display in Streamlit
         sns.heatmap(data_1.corr(), annot=True, cmap="RdYlGn", annot_kws={"size":8}, ax=ax)
         st.pyplot(fig)
@@ -280,21 +269,20 @@ def main():
         
         # smoting of x and y
         # Create a checkbox to allow the user to choose whether or not to use SMOTE
+        st.subheader('Data Splitting and SMOTE')
+        st.write("Target variable distribution:")
         st.write(y.value_counts())
         
-        # Only show SMOTE option if it's available
-        if SMOTE_AVAILABLE:
-            use_smote = st.checkbox('Use SMOTE to oversample the minority class')
-        else:
-            use_smote = False
+        use_smote = st.checkbox('Use SMOTE to oversample the minority class')
 
         # Create a slider to allow the user to choose the test size
         test_size = st.slider('Test size', 0.1, 0.9, 0.3)
 
-        if use_smote and SMOTE_AVAILABLE:
+        if use_smote:
             # Use SMOTE to oversample the minority class in the data
             sm = SMOTE(random_state=42)
             X_resampled, y_resampled = sm.fit_resample(x_scaled, y)
+            st.write("After SMOTE - Target variable distribution:")
             st.write(y_resampled.value_counts())
             # Split the resampled data into training and testing sets
             X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=test_size, random_state=42)
@@ -308,28 +296,34 @@ def main():
         st.write(f"y_train shape: {y_train.shape}")
         st.write(f"y_test shape: {y_test.shape}")
         st.write('---')
+        
 # Model selection
-               
+        st.header('Model Training and Evaluation')        
 # Create a dictionary of classifiers
         task = st.selectbox('Select machine learning task', ['None','Classification', 'Regression', 'Clustering'])
         if task == 'Classification':
             algorithm = st.selectbox('Select algorithm', ['Logistic Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'SVM', 'KNN', 'Gradient Boosting'])
             if algorithm == 'Logistic Regression':
-               model = LogisticRegression()
+               model = LogisticRegression(max_iter=1000)
             elif algorithm == 'XGBoost':
-               model = XGBClassifier()
+               model = XGBClassifier(eval_metric='logloss')
             elif algorithm == 'Decision Tree':
                model = DecisionTreeClassifier()
             elif algorithm == 'Random Forest':
                model = RandomForestClassifier()
             elif algorithm == 'SVM':
-               model = SVC()
+               model = SVC(probability=True)
             elif algorithm == 'KNN':
                model = KNeighborsClassifier()
             elif algorithm == 'Gradient Boosting':
                model = GradientBoostingClassifier()
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
+            
+            with st.spinner('Training model...'):
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+            
+            st.success('Model training completed!')
+            st.subheader('Classification Results')
             report = classification_report(y_test, y_pred, output_dict=True)
             report_df = pd.DataFrame(report).transpose()
             st.write(report_df)
@@ -344,12 +338,13 @@ def main():
                 st.write('ROC AUC score (one-vs-rest):', roc_auc_score(y_test, y_prob, multi_class='ovr'))
             else:
                 st.write('ROC AUC score:', roc_auc_score(y_test, y_pred))
+                
         elif task == 'Regression':
             algorithm = st.selectbox('Select algorithm', ['Linear Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'KNN', 'Gradient Boosting'])
             if algorithm == 'Linear Regression':
                 model = LinearRegression()
             elif algorithm == 'XGBoost':
-                model = XGBRegressor()
+                model = XGBRegressor(eval_metric='rmse')
             elif algorithm == 'Decision Tree':
                 model = DecisionTreeRegressor()
             elif algorithm == 'Random Forest':
@@ -357,32 +352,49 @@ def main():
             elif algorithm == 'KNN':
                 model = KNeighborsRegressor()
             elif algorithm == 'Gradient Boosting':
-                model = GradientBoostingRegressor()    
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
+                model = GradientBoostingRegressor()
+            
+            with st.spinner('Training model...'):
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+            
+            st.success('Model training completed!')
+            st.subheader('Regression Results')
             st.write('R2 score:', r2_score(y_test, y_pred))
             st.write('Mean squared error:', mean_squared_error(y_test, y_pred))
+            st.write('Root mean squared error:', np.sqrt(mean_squared_error(y_test, y_pred)))
+            
         elif task == 'Clustering':
             algorithm = st.selectbox('Select algorithm', ['K-means'])
             if algorithm == 'K-means':
                 n_clusters = st.slider('Select number of clusters', 2, 10)
-                model = KMeans(n_clusters=n_clusters)
-                model.fit(data_clean)
-                labels = model.labels_
+                model = KMeans(n_clusters=n_clusters, random_state=42)
+                
+                with st.spinner('Training clustering model...'):
+                    model.fit(data_clean)
+                    labels = model.labels_
+                
+                st.success('Clustering completed!')
                 silhouette_avg = silhouette_score(data_clean, labels)
                 st.write('Silhouette score:', silhouette_avg)
+                
+                # Elbow method
+                st.subheader('Elbow Method for Optimal K')
                 distortions = []
                 for i in range(2, 11):
-                    kmeans = KMeans(n_clusters=i)
+                    kmeans = KMeans(n_clusters=i, random_state=42)
                     kmeans.fit(data_clean)
                     distortions.append(kmeans.inertia_)
+                
                 fig, ax = plt.subplots()
                 ax.plot(range(2, 11), distortions, 'bx-')
                 ax.set_xlabel('Number of clusters')
                 ax.set_ylabel('Distortion')
                 ax.set_title('Elbow Method')
                 st.pyplot(fig)
+                
                 data_clean['cluster'] = labels
-                st.write(data_clean)      
+                st.write(data_clean)
+                
 if __name__ == "__main__":
     main()
