@@ -6,9 +6,10 @@ import seaborn as sns
 from sklearn.preprocessing import OrdinalEncoder
 import time
 import requests
+import streamlit as st
 from streamlit_lottie import st_lottie
+from streamlit_lottie import st_lottie_spinner
 from io import StringIO
-from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -21,20 +22,33 @@ from sklearn.ensemble import RandomForestClassifier,RandomForestRegressor
 from sklearn.ensemble import GradientBoostingClassifier,GradientBoostingRegressor
 from xgboost import XGBClassifier,XGBRegressor
 from sklearn.metrics import classification_report, f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, roc_auc_score, r2_score,mean_squared_error, silhouette_score
+import streamlit.components.v1 as components
 import chardet
 
+# Import SMOTE with try-except to handle version issues
+try:
+    from imblearn.over_sampling import SMOTE
+    SMOTE_AVAILABLE = True
+except ImportError:
+    SMOTE_AVAILABLE = False
+    st.warning("SMOTE is not available. Please install imbalanced-learn: pip install imbalanced-learn")
+
 # Animation at start
+
 def load_lottieurl(url: str):
+
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
+
 lottie_url_hello = "https://lottie.host/c7ae530f-5d35-4fe1-851e-12bc2b7864f4/2rcYkXCxHr.json"
+
 lottie_hello = load_lottieurl(lottie_url_hello)
 
-if lottie_hello:
-    st_lottie(lottie_hello)
+
+st_lottie(lottie_hello)
 
 def main():
     st.header("Supervised Machine Learning")
@@ -60,7 +74,7 @@ def main():
         st.subheader('We can see the data type, null values and unique value for each column.')
         result = {'Column': [],'Data Type': [],'Null Values': [],'Unique Values': []}
 
-        # Populate the dictionary with the results
+# Populate the dictionary with the results
         for col in data.columns:
             result['Column'].append(col)
             result['Data Type'].append(data[col].dtype)
@@ -68,10 +82,10 @@ def main():
             result['Unique Values'].append(data[col].nunique())
             
 
-        # Convert the dictionary to a DataFrame
+# Convert the dictionary to a DataFrame
         result = pd.DataFrame(result)
 
-        # Show the table
+# Show the table
         st.write(result)
         # Visualization      
         st.sidebar.header("Visualizations")
@@ -152,7 +166,7 @@ def main():
 
         result = {'Column': [],'Data Type': [],'Null Values': [],'Unique Values': []}
 
-        # Populate the dictionary with the results
+# Populate the dictionary with the results
         for col in data.columns:
             result['Column'].append(col)
             result['Data Type'].append(data[col].dtype)
@@ -160,29 +174,29 @@ def main():
             result['Unique Values'].append(data[col].nunique())
             
 
-        # Convert the dictionary to a DataFrame
+# Convert the dictionary to a DataFrame
         result = pd.DataFrame(result)
 
-        # Show the table
+# Show the table
         st.subheader('We have removed all the null values.')
         st.write(result)
         st.write(data)
         st.write('---')
     
-        # Remove outliers from the selected columns using the median method            
+    # Remove outliers from the selected columns using the median method            
         columns = st.multiselect('Choose columns to remove outliers from', data.columns)
          
         data_clean = data.copy()
         for column in columns:
-            # Calculate the median and interquartile range (IQR)
+        # Calculate the median and interquartile range (IQR)
             Q1 = data[column].quantile(0.25)
             Q3 = data[column].quantile(0.75)
             IQR = Q3 - Q1
 
-            # Remove outliers
+        # Remove outliers
             data_clean = data_clean[~((data_clean[column] < (Q1 - 1.5 * IQR)) | (data_clean[column] > (Q3 + 1.5 * IQR)))]
 
-        # Show the first 5 rows of the cleaned data
+    # Show the first 5 rows of the cleaned data
         st.write('Cleaned Data')
         st.write(data_clean.head())
                     
@@ -198,7 +212,7 @@ def main():
                    outlier_per = len(outliers) / len(data_clean) * 100
                    outlier_percent[col] = outlier_per
 
-        # Display the percentage of outliers for each column
+# Display the percentage of outliers for each column
         st.subheader('We have reduced the outliers:')
         for col, percentage in outlier_percent.items():
             st.write(f"{col}: {percentage:.2f}%")
@@ -208,12 +222,11 @@ def main():
         ordinal_encoders = {}       
         columns = st.multiselect('Select columns for encoding', data_clean.columns)
 
-        if columns:
-            encoder = OrdinalEncoder()
-            data_clean[columns] = encoder.fit_transform(data_clean[columns])
-            for col in columns:
-                ordinal_encoders[col] = encoder
-        # Display the updated DataFrame
+
+        encoder = OrdinalEncoder()
+        data_clean[columns] = encoder.fit_transform(data_clean[columns])
+        ordinal_encoders[col] = encoder
+# Display the updated DataFrame
         st.write(data_clean.head())
         
         
@@ -224,18 +237,19 @@ def main():
         obj_cols = data_1.select_dtypes(include=object)
 
         for col in obj_cols:
-            # Compute the frequency of each value in the column
+        # Compute the frequency of each value in the column
             freq = data_1[col].value_counts() / len(data_1)
     
-            # Map the frequencies to the column
+        # Map the frequencies to the column
             data_1[col] = data_1[col].map(freq)
+            #st.write(data_1.head()) 
         st.write('---')
        
         
         
         # heatmap and corr graph
-        st.subheader('Correlation and heatmap')
-        fig, ax = plt.subplots(figsize=(10, 8))
+        st.subheader('Correalation and heatmap')
+        fig, ax = plt.subplots(figsize=(10, 8))  # Adjusted for more readable display in Streamlit
         sns.heatmap(data_1.corr(), annot=True, cmap="RdYlGn", annot_kws={"size":8}, ax=ax)
         st.pyplot(fig)
         st.write('---')
@@ -265,13 +279,19 @@ def main():
         st.write('---')
         
         # smoting of x and y
+        # Create a checkbox to allow the user to choose whether or not to use SMOTE
         st.write(y.value_counts())
-        use_smote = st.checkbox('Use SMOTE to oversample the minority class')
+        
+        # Only show SMOTE option if it's available
+        if SMOTE_AVAILABLE:
+            use_smote = st.checkbox('Use SMOTE to oversample the minority class')
+        else:
+            use_smote = False
 
         # Create a slider to allow the user to choose the test size
         test_size = st.slider('Test size', 0.1, 0.9, 0.3)
 
-        if use_smote:
+        if use_smote and SMOTE_AVAILABLE:
             # Use SMOTE to oversample the minority class in the data
             sm = SMOTE(random_state=42)
             X_resampled, y_resampled = sm.fit_resample(x_scaled, y)
@@ -288,9 +308,9 @@ def main():
         st.write(f"y_train shape: {y_train.shape}")
         st.write(f"y_test shape: {y_test.shape}")
         st.write('---')
-        # Model selection
+# Model selection
                
-        # Create a dictionary of classifiers
+# Create a dictionary of classifiers
         task = st.selectbox('Select machine learning task', ['None','Classification', 'Regression', 'Clustering'])
         if task == 'Classification':
             algorithm = st.selectbox('Select algorithm', ['Logistic Regression', 'XGBoost', 'Decision Tree', 'Random Forest', 'SVM', 'KNN', 'Gradient Boosting'])
@@ -364,6 +384,5 @@ def main():
                 st.pyplot(fig)
                 data_clean['cluster'] = labels
                 st.write(data_clean)      
-                
 if __name__ == "__main__":
     main()
